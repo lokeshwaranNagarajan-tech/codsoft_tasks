@@ -1,0 +1,149 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+  DELIVERY_PARTNER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  fullName      String
+  phoneNumber   String?
+  role          Role           @default(CUSTOMER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  vendorProfile VendorProfile?
+  orders        Order[]
+}
+
+model VendorProfile {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  storeName    String
+  slug         String    @unique
+  description  String?
+  logo         String?
+  banner       String?
+  rating       Float     @default(5.0)
+  reviewCount  Int       @default(0)
+  verified     Boolean   @default(false)
+  location     String?
+  responseRate String?   @default("98%")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products     Product[]
+  orderItems   OrderItem[]
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  vendorId        String
+  title           String
+  slug            String
+  description     String
+  price           Float
+  compareAtPrice  Float?
+  stock           Int           @default(0)
+  sku             String        @unique
+  category        String
+  images          String[]      @default([])
+  specifications  Json?         @default("{}")
+  rating          Float         @default(5.0)
+  reviewCount     Int           @default(0)
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  vendor          VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@index([vendorId])
+  @@index([category])
+  @@index([price])
+}
+
+model Order {
+  id              String            @id @default(uuid())
+  customerId      String
+  status          OrderStatus       @default(PENDING)
+  subtotal        Float
+  shippingFee     Float             @default(0.0)
+  tax             Float             @default(0.0)
+  discount        Float             @default(0.0)
+  total           Float
+  paymentMethod   String            @default("credit_card")
+  paymentStatus   PaymentStatus     @default(PENDING)
+  shippingAddress Json
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  customer        User              @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+  tracking        DeliveryTracking?
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String        @id @default(uuid())
+  orderId   String
+  productId String
+  vendorId  String
+  price     Float
+  quantity  Int
+  createdAt DateTime      @default(now())
+
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product       @relation(fields: [productId], references: [id])
+  vendor    VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@index([orderId])
+  @@index([vendorId])
+}
+
+model DeliveryTracking {
+  id                String       @id @default(uuid())
+  orderId           String       @unique
+  carrier           String
+  trackingNumber    String       @unique
+  status            OrderStatus  @default(PENDING)
+  estimatedDelivery DateTime?
+  currentLocation   String?
+  checkpoints       Json         @default("[]")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}

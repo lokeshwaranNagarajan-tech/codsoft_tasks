@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PRIMARY_ADMIN
+  SECONDARY_ADMIN
+  FACULTY
+  STUDENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+}
+
+enum FeeStatus {
+  PAID
+  PENDING
+  PARTIAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  collegeId String   @unique
+  name      String
+  dob       DateTime
+  role      Role
+
+  student   Student?
+  faculty   Faculty?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+
+  students   Student[]
+  faculties  Faculty[]
+  subjects   Subject[]
+  advisors   ClassAdvisor[]
+  timetables Timetable[]
+
+  createdAt DateTime @default(now())
+}
+
+model Faculty {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  designation  String
+  isHOD        Boolean  @default(false)
+
+  subjects       SubjectAssignment[]
+  advisorClasses ClassAdvisor[]
+  attendances    Attendance[]
+  timetables     Timetable[]
+
+  createdAt    DateTime @default(now())
+}
+
+model Student {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  registerNo   String   @unique
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  year         Int
+  semester     Int
+  section      String
+
+  attendances  Attendance[]
+  marks        Mark[]
+  fees         Fee[]
+
+  createdAt    DateTime @default(now())
+}
+
+model Subject {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  credits      Int
+  semester     Int
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  faculties    SubjectAssignment[]
+  attendances  Attendance[]
+  marks        Mark[]
+  timetables   Timetable[]
+
+  createdAt    DateTime @default(now())
+}
+
+model SubjectAssignment {
+  id           String  @id @default(cuid())
+
+  facultyId    String
+  faculty      Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  subjectId    String
+  subject      Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  academicYear String
+
+  @@unique([facultyId, subjectId, academicYear])
+}
+
+model ClassAdvisor {
+  id           String     @id @default(cuid())
+
+  facultyId    String
+  faculty      Faculty    @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  year         Int
+  section      String
+
+  @@unique([departmentId, year, section])
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  facultyId String?
+  faculty   Faculty?         @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+
+  date      DateTime
+  status    AttendanceStatus
+
+  @@unique([studentId, subjectId, date])
+}
+
+model Exam {
+  id           String   @id @default(cuid())
+  name         String
+  semester     Int
+  academicYear String
+
+  marks        Mark[]
+
+  createdAt    DateTime @default(now())
+}
+
+model Mark {
+  id        String  @id @default(cuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  examId    String
+  exam      Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  marks     Float
+
+  @@unique([studentId, subjectId, examId])
+}
+
+model Fee {
+  id            String    @id @default(cuid())
+
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  totalFee      Float
+  paidAmount    Float
+  pendingAmount Float
+  status        FeeStatus
+  paymentDate   DateTime?
+
+  createdAt     DateTime  @default(now())
+}
+
+model Timetable {
+  id           String     @id @default(cuid())
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  semester     Int
+  section      String
+  day          String
+  period       Int
+
+  subjectId    String
+  subject      Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  facultyId    String
+  faculty      Faculty    @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, semester, section, day, period])
+}

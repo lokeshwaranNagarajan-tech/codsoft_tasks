@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    --secondary: #0ea5e9;
+    --secondary-foreground: #ffffff;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f43f5e;
+    --accent-foreground: #ffffff;
+    --border: #e2e8f0;
+    --ring: #4f46e5;
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: #090d16;
+    --foreground: #f8fafc;
+    --card: #111827;
+    --card-foreground: #f8fafc;
+    --primary: #6366f1;
+    --primary-foreground: #ffffff;
+    --secondary: #38bdf8;
+    --secondary-foreground: #0f172a;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #fb7185;
+    --accent-foreground: #ffffff;
+    --border: #1e293b;
+    --ring: #6366f1;
+  }
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Glassmorphism helpers */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-dark {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Shimmer animation for loading & promos */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
